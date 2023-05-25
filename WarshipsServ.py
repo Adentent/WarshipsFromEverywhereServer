@@ -184,7 +184,6 @@ Copy that to your friend so that they can play with you!" % code
                         client_socket.recv(512)
                         while all_the_codes_used[code] != 0:
                             continue
-                        # TODO: 完成匹配内容
                         client_socket.sendall(finish_matching.encode('utf-8'))
                         client_socket.recv(512)
                         all_the_codes_used[code] = 1
