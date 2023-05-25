@@ -130,6 +130,7 @@ def handle_client():
             while True:
                 code = randint(10000, 99999)
                 if code not in all_the_codes_used.keys():
+                    all_the_codes_used[code] = -1
                     break
             # TODO: 完成all_the_codes_used实质性内容(记住了这是个字典)
             ask_for_req_begin = "Warships from Everywhere"
@@ -157,6 +158,7 @@ Copy that to your friend so that they can play with you!" % code
             waiting = "Waiting for your friend..."
             finish_matching = "Your friend (now your enemy) arrived!\nFire!"
             war_finished = "Got back to the Lobby!"
+            join_code_input = "Input your code here: (ask your friend for it)\n"
             while True:
                 ask_for_req = ask_for_req_begin + " - " + ask_for_req_mid + " " + ask_for_req_end + " "
                 # 向客户端发送数据
@@ -180,14 +182,25 @@ Copy that to your friend so that they can play with you!" % code
                         client_socket.recv(512)
                         client_socket.sendall(waiting.encode('utf-8'))
                         client_socket.recv(512)
+                        while all_the_codes_used[code] != 0:
+                            continue
                         # TODO: 完成匹配内容
                         client_socket.sendall(finish_matching.encode('utf-8'))
                         client_socket.recv(512)
+                        all_the_codes_used[code] = 1
                         # TODO: 完成实质性游戏内容
                         client_socket.sendall(war_finished.encode('utf-8'))
                         client_socket.recv(512)
                         ask_for_req_mid = "Lobby"
-                    elif req == "join"
+                        all_the_codes_used[code] = -1
+                    elif req == "join":
+                        client_socket.sendall(join_code_input.encode('utf-8'))
+                        code = client_socket.recv(512).decode('utf-8')
+                        if code.isdigit():
+                            if 10000 <= int(code) <= 99999:
+                                code = int(code)
+                                all_the_codes_used[code] = 0
+                        # TODO: 完成非法输入相关内容
         except Exception as e:
             print(e)
         finally:
