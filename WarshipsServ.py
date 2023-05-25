@@ -2,11 +2,17 @@ import socket
 import threading
 import uuid
 import re
+from random import randint
 
 
+all_the_codes_used = {}
 # 读取用户文件
 user_file = open("users", "r")
-users = eval("".join(user_file.readlines()))
+lines = "".join(user_file.readlines())
+if lines == '':
+    users = {}
+else:
+    users = eval(lines)
 user_file.close()
 user_file = open("users", "w+")
 # print("".join(user_file.readlines()))
@@ -78,24 +84,31 @@ def handle_client():
     """
     global users
     while True:
-        client_socket, client_address = server_socket.accept()
+        try:
+            client_socket, client_address = server_socket.accept()
+        # except OSError as e:
+        except OSError:
+            # print(e)
+            return
         threads.append(threading.current_thread())
         try:
             # 请求登陆
             ask_for_passwd, ask_for_username = "Password: ", "Username: "
-            ask_for_req = "Login/Sign up(1 for Login, 2 for Sign up): "
+            ask_for_req_begin = "Login/Sign up(1 for Login, 2 for Sign up): "
             wrong_passwd = "Wrong password.\nYou are kicked from the server!"
             successfully_login = "Logged in successfully."
             successfully_sign_up = "Signed up successfully."
             no_such_user = "No such user.\nYou are kicked from the server!"
             no_such_req = "No such request.\nYou are kicked from the server!"
-            client_socket.sendall(ask_for_req.encode('utf-8'))
+            client_socket.sendall(ask_for_req_begin.encode('utf-8'))
             req = client_socket.recv(1024).decode('utf-8')
             client_socket.sendall(ask_for_username.encode('utf-8'))
             username = client_socket.recv(1024).decode('utf-8')
             client_socket.sendall(ask_for_passwd.encode('utf-8'))
             password = client_socket.recv(1024).decode('utf-8')
-            if req != '1' and req != '2':
+            if (not req) or (not username) or (not password):
+                raise Exception("No input\nClient offline")
+            elif req != '1' and req != '2':
                 client_socket.sendall(no_such_req.encode('utf-8'))
                 raise Exception("No such request")
             elif req == '1' and username not in users:
@@ -109,15 +122,72 @@ def handle_client():
             else:
                 client_socket.sendall(wrong_passwd.encode('utf-8'))
                 raise Exception("Wrong password")
+            tst = client_socket.recv(1024)
+            client_socket.sendall(tst)
+
+            print(client_address, "start common communicate!")
             # 开始正常交互
             while True:
-                # 接收客户端发送的数据
-                data = client_socket.recv(1024)
-                if not data:
+                code = randint(10000, 99999)
+                if code not in all_the_codes_used.keys():
                     break
-                print(f"Received {data.decode('utf-8')} from {str(client_address[0]) + ':' + str(client_address[1])}")
-                # 原样将收到的数据返回给客户端
-                client_socket.sendall(data)
+            # TODO: 完成all_the_codes_used实质性内容(记住了这是个字典)
+            ask_for_req_begin = "Warships from Everywhere"
+            ask_for_req_mid = "Lobby"  # -> User state
+            ask_for_req_end = "$"
+            help_document = """\
+Hi player!
+Welcome to the lobby of Warships from Everywhere.
+As you can see,
+There is a lovely console in front of your eyes (yes, lovely).
+            
+Here are the optional commands:
+help - Show this;
+start - Start a new game;
+join - Join a game by using codes.
+            
+Want to leave?
+Just type nothing and press Enter!
+            
+If you understand,
+Press Enter!\n"""
+            start_a_new_game = "\
+We generated a unique code for you and here it is: %s\n\
+Copy that to your friend so that they can play with you!" % code
+            waiting = "Waiting for your friend..."
+            finish_matching = "Your friend (now your enemy) arrived!\nFire!"
+            war_finished = "Got back to the Lobby!"
+            while True:
+                ask_for_req = ask_for_req_begin + " - " + ask_for_req_mid + " " + ask_for_req_end + " "
+                # 向客户端发送数据
+                client_socket.sendall(ask_for_req.encode('utf-8'))
+                # 接收客户端发送的数据
+                req = client_socket.recv(1024)
+                if not req:
+                    break
+                # print(f"Received {req.decode('utf-8')} from {str(client_address[0]) + ':' + str(client_address[1])}")
+                if ask_for_req_mid == "Lobby":  # 玩家处在Lobby
+                    if req == "help":
+                        client_socket.sendall(help_document.encode('utf-8'))
+                        client_socket.recv(512)
+                        client_socket.sendall(b"__CONSOLE__")
+                        client_socket.recv(512)
+                    elif req == "start":
+                        ask_for_req_mid = "Waiting Line"
+                        client_socket.sendall(start_a_new_game.encode('utf-8'))
+                        client_socket.recv(512)
+                        client_socket.sendall(b"__KEEP_WAITING__")
+                        client_socket.recv(512)
+                        client_socket.sendall(waiting.encode('utf-8'))
+                        client_socket.recv(512)
+                        # TODO: 完成匹配内容
+                        client_socket.sendall(finish_matching.encode('utf-8'))
+                        client_socket.recv(512)
+                        # TODO: 完成实质性游戏内容
+                        client_socket.sendall(war_finished.encode('utf-8'))
+                        client_socket.recv(512)
+                        ask_for_req_mid = "Lobby"
+                    elif req == "join"
         except Exception as e:
             print(e)
         finally:
