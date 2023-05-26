@@ -2,8 +2,11 @@ import socket
 import threading
 import uuid
 import re
+import os
 from random import randint
 
+
+os.chdir(os.path.split(os.path.realpath(__file__))[0])
 
 all_the_codes_used = {}
 # 读取用户文件
@@ -83,6 +86,7 @@ def handle_client():
     处理客户端请求的线程函数
     """
     global users
+    # 登陆
     while True:
         try:
             client_socket, client_address = server_socket.accept()
@@ -141,15 +145,15 @@ Hi player!
 Welcome to the lobby of Warships from Everywhere.
 As you can see,
 There is a lovely console in front of your eyes (yes, lovely).
-            
+
 Here are the optional commands:
 help - Show this;
 start - Start a new game;
 join - Join a game by using codes.
-            
+
 Want to leave?
 Just type nothing and press Enter!
-            
+
 If you understand,
 Press Enter!\n"""
             start_a_new_game = "\
@@ -161,10 +165,13 @@ Copy that to your friend so that they can play with you!" % code
             join_code_input = "Input your code here: (ask your friend for it)\n"
             wrong_input = "Input 'help' to see what to do!"
             while True:
+                print(1)
                 ask_for_req = ask_for_req_begin + " - " + ask_for_req_mid + " " + ask_for_req_end + " "
                 # 向客户端发送数据
+                print(2)
                 client_socket.sendall(ask_for_req.encode('utf-8'))
                 # 接收客户端发送的数据
+                print(3)
                 req = client_socket.recv(1024).decode('utf-8')
                 if not req:
                     break
@@ -203,6 +210,8 @@ Copy that to your friend so that they can play with you!" % code
                         # TODO: 完成非法输入相关内容
                     else:
                         client_socket.sendall(wrong_input.encode('utf-8'))
+                        client_socket.recv(1024)
+                        client_socket.sendall(b'__CONSOLE__')
                         client_socket.recv(1024)
         except Exception as e:
             print(e)
