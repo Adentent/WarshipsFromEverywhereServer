@@ -159,12 +159,13 @@ Copy that to your friend so that they can play with you!" % code
             finish_matching = "Your friend (now your enemy) arrived!\nFire!"
             war_finished = "Got back to the Lobby!"
             join_code_input = "Input your code here: (ask your friend for it)\n"
+            wrong_input = "Input 'help' to see what to do!"
             while True:
                 ask_for_req = ask_for_req_begin + " - " + ask_for_req_mid + " " + ask_for_req_end + " "
                 # 向客户端发送数据
                 client_socket.sendall(ask_for_req.encode('utf-8'))
                 # 接收客户端发送的数据
-                req = client_socket.recv(1024)
+                req = client_socket.recv(1024).decode('utf-8')
                 if not req:
                     break
                 # print(f"Received {req.decode('utf-8')} from {str(client_address[0]) + ':' + str(client_address[1])}")
@@ -200,6 +201,9 @@ Copy that to your friend so that they can play with you!" % code
                                 code = int(code)
                                 all_the_codes_used[code] = 0
                         # TODO: 完成非法输入相关内容
+                    else:
+                        client_socket.sendall(wrong_input.encode('utf-8'))
+                        client_socket.recv(1024)
         except Exception as e:
             print(e)
         finally:
