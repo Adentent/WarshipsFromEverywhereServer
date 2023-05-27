@@ -165,13 +165,13 @@ Copy that to your friend so that they can play with you!" % code
             join_code_input = "Input your code here: (ask your friend for it)\n"
             wrong_input = "Input 'help' to see what to do!"
             while True:
-                print(1)
+                # print(1)
                 ask_for_req = ask_for_req_begin + " - " + ask_for_req_mid + " " + ask_for_req_end + " "
                 # 向客户端发送数据
-                print(2)
+                # print(2)
                 client_socket.sendall(ask_for_req.encode('utf-8'))
                 # 接收客户端发送的数据
-                print(3)
+                # print(3)
                 req = client_socket.recv(1024).decode('utf-8')
                 if not req:
                     break
